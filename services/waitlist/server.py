@@ -116,12 +116,21 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send_json(404, {"error": "not found"})
 
+    def _client_ip(self):
+        # Trust X-Real-IP: this service only binds to 127.0.0.1, so the only
+        # thing that can set this header is the local nginx proxy in front of
+        # it (see README) -- an external client can't reach this port to spoof
+        # it directly. Without this, self.client_address is always nginx's own
+        # loopback address behind proxy_pass, which would turn the per-IP rate
+        # limit into one shared site-wide bucket.
+        return self.headers.get("X-Real-IP") or self.client_address[0]
+
     def do_POST(self):
         if self.path != "/api/waitlist":
             self._send_json(404, {"error": "not found"})
             return
 
-        if is_rate_limited(self.client_address[0]):
+        if is_rate_limited(self._client_ip()):
             self._send_json(429, {"error": "too many requests, try again later"})
             return
 
