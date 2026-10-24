@@ -1,0 +1,13 @@
+# Demand Forecasting & Budgeting Tool — Early Access
+
+> Fake-door validation page for an AI-powered demand forecasting and budgeting tool for production planners, supply chain managers, procurement teams, and finance teams. Pre-launch, recruiting named design partners.
+
+## About
+- Problem: inaccurate demand forecasts, raw material price volatility, weather/political procurement risk, incomplete/inaccurate data, production capacity constraints.
+- Status: pre-launch validation page, not a live product.
+- Contact: [CONTACT EMAIL]
+
+## Pages
+- Landing page: https://claude.ai/artifact/BkmwNPN4Enh8UYBZvchbnJ
+- Privacy Policy: same URL above, via footer link
+- Terms of Use: same URL above, via footer link
