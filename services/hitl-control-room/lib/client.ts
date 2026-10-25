@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { BoardState } from "./types";
+import { apiPath } from "./basePath";
 
 /** Live board state over server-sent events, seeded from the server render. */
 export function useBoard(initial: BoardState) {
@@ -9,7 +10,7 @@ export function useBoard(initial: BoardState) {
   const [live, setLive] = useState(false);
 
   useEffect(() => {
-    const es = new EventSource("/api/board/stream");
+    const es = new EventSource(apiPath("/api/board/stream"));
     es.onopen = () => setLive(true);
     es.onmessage = (e) => {
       try {
@@ -31,7 +32,7 @@ export async function postJSON<T = unknown>(
   method: "POST" | "DELETE" = "POST",
 ): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
   try {
-    const res = await fetch(url, {
+    const res = await fetch(apiPath(url), {
       method,
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
