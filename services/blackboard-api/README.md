@@ -7,9 +7,9 @@ shared coordination blackboard over HTTP instead of needing direct
 file/CLI access to the database.
 
 Deployed on `srini-vm01` at `/opt/blackboard-api`, running as the
-`blackboard-api` systemd service on `127.0.0.1:8788` (see
-[Deployment status](#deployment-status) below — public routing through
-`samsumanalytics.com` is not working yet). Originally built against
+`blackboard-api` systemd service on `127.0.0.1:8788`, publicly reachable
+at `https://samsumanalytics.com/api/blackboard/*` (see
+[Deployment status](#deployment-status) below). Originally built against
 Node's built-in `node:sqlite`, but switched to `better-sqlite3` because
 the VM runs Node 20.20.2 and `node:sqlite` needs 22.5+. `better-sqlite3`
 13.x also requires Node >=22 (prebuilt binary ABI mismatch — segfaults on
@@ -86,25 +86,27 @@ devops hadn't picked up the earlier handoff):
   serves `samsumanalytics.com` — confirmed via `nginx -T` and the access
   log that this is the right/only block handling that domain).
 
-**Not working: public access via `https://samsumanalytics.com/api/blackboard/*`
-returns a bare nginx 404.** Confirmed this is not an nginx config problem:
-`/` and `/robots.txt` serve fine through the same domain, the same
-nginx block, and the same request path shows up correctly in nginx's own
-`access.log` with a 404 it generated itself — but even a trivial
-`location /api/blackboard/pingtest { return 200 "..."; }` test location
-got the same 404, through fresh nginx workers, with a guaranteed-uncached
-unique path. That rules out nginx location matching, DNS, and edge
-caching. What's left is something on the Cloudflare side for this zone
-(a Page Rule, Transform Rule, or Workers Route matching `/api/*`) that
-I can't see without dashboard/API access. **The service itself is fully
-working — this is strictly a "how do we expose it publicly" problem,
-not a bug in the API.**
+**Fixed (2026-10-25).** Public access via
+`https://samsumanalytics.com/api/blackboard/*` was 404ing even though the
+service worked fine locally on the VM. Root cause turned out to be
+unrelated to Cloudflare rules (the earlier theory): Cloudflare was
+reaching the origin over **plain HTTP (port 80)**, not the HTTPS /
+Authenticated-Origin-Pulls vhost — i.e. the `default` server block in
+`/etc/nginx/sites-enabled/default`, not
+`/etc/nginx/conf.d/cloudflare-aop.conf`. The `location /api/blackboard/`
+proxy block had only ever been added to the port-443 AOP vhost, so
+requests arriving on port 80 fell through to that vhost's catch-all
+`try_files ... =404`. `/` and `/hitl` worked via Cloudflare because both
+exist in *both* vhosts; `/api/blackboard/` only existed in the one
+Cloudflare doesn't actually use.
 
-Until that's resolved, reach it either directly on the VM
-(`http://127.0.0.1:8788`, e.g. via SSH tunnel) or by adding a path that
-isn't being intercepted. Whoever has Cloudflare dashboard access for
-this zone should check Rules → check for anything matching `/api/*` on
-`samsumanalytics.com`.
+Fix: added the same `location /api/blackboard/ { proxy_pass
+http://127.0.0.1:8788/api/; proxy_set_header X-Real-IP $remote_addr; }`
+block to `/etc/nginx/sites-enabled/default` (backed up the prior file
+first), `nginx -t` passed, reloaded. Verified
+`https://samsumanalytics.com/api/blackboard/health` returns `{"ok":true}`
+and `/api/blackboard/agents` returns `[]`, with `/robots.txt` and `/hitl`
+unaffected.
 
 ## What's intentionally NOT here (v1 scope)
 
