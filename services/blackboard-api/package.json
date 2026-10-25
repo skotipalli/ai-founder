@@ -1,10 +1,11 @@
 {
   "name": "blackboard-api",
   "version": "1.0.0",
-  "description": "Express HTTP wrapper over the kapi blackboard Postgres backend (blackboard/schema.sql)",
-  "main": "index.js",
+  "description": "Express HTTP wrapper over the kapi blackboard (SQLite, via node:sqlite)",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +13,9 @@
   "type": "commonjs",
   "private": "true",
   "dependencies": {
-    "express": "^5.3.0",
-    "pg": "^8.23.1"
+    "express": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=22.5.0"
   }
 }

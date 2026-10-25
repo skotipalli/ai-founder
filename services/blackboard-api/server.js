@@ -1,5 +1,5 @@
 const express = require('express');
-const { pool } = require('./db');
+const { db } = require('./db');
 
 const HOST = process.env.BLACKBOARD_API_HOST || '127.0.0.1';
 const PORT = Number(process.env.BLACKBOARD_API_PORT || 8788);
@@ -14,21 +14,23 @@ function isAgentName(v) {
   return typeof v === 'string' && AGENT_NAME_RE.test(v);
 }
 
-// Translate Postgres constraint errors into the right HTTP status instead
-// of leaking a 500 for client mistakes (unknown agent, bad kind, dup name).
-function sendPgError(res, err) {
-  if (err.code === '23505') return res.status(409).json({ error: 'already exists' });
-  if (err.code === '23503') return res.status(400).json({ error: 'references an unknown agent' });
-  if (err.code === '23514' || err.code === '22P02') {
-    return res.status(400).json({ error: 'invalid value' });
+// Translate sqlite constraint errors into the right HTTP status instead of
+// leaking a 500 for client mistakes (unknown agent, bad kind, dup name).
+function sendSqliteError(res, err) {
+  if (err.code === 'ERR_SQLITE_ERROR') {
+    if (err.message.includes('UNIQUE constraint')) return res.status(409).json({ error: 'already exists' });
+    if (err.message.includes('FOREIGN KEY constraint')) {
+      return res.status(400).json({ error: 'references an unknown agent' });
+    }
+    if (err.message.includes('CHECK constraint')) return res.status(400).json({ error: 'invalid value' });
   }
   console.error(err);
   return res.status(500).json({ error: 'internal error' });
 }
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', (req, res) => {
   try {
-    await pool.query('SELECT 1');
+    db.prepare('SELECT 1').get();
     res.json({ ok: true });
   } catch (err) {
     res.status(503).json({ ok: false });
@@ -36,7 +38,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Register an agent — bb register <name> "<role>"
-app.post('/api/agents', async (req, res) => {
+app.post('/api/agents', (req, res) => {
   const { name, role, cwd } = req.body || {};
   if (!isAgentName(name)) {
     return res.status(400).json({ error: 'name must match ^[a-z0-9-]+$' });
@@ -45,31 +47,32 @@ app.post('/api/agents', async (req, res) => {
     return res.status(400).json({ error: 'role is required' });
   }
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO agents (name, role, cwd) VALUES ($1, $2, $3)
-       RETURNING name, role, cwd, status, registered_at`,
-      [name, role, cwd || null]
-    );
-    res.status(201).json(rows[0]);
+    const row = db
+      .prepare(
+        `INSERT INTO agents (name, role, cwd) VALUES (?, ?, ?)
+         RETURNING name, role, cwd, status, registered_at`
+      )
+      .get(name, role, cwd || null);
+    res.status(201).json(row);
   } catch (err) {
-    sendPgError(res, err);
+    sendSqliteError(res, err);
   }
 });
 
 // bb who
-app.get('/api/agents', async (req, res) => {
+app.get('/api/agents', (req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT name, role, cwd, status, registered_at FROM agents ORDER BY registered_at'
-    );
+    const rows = db
+      .prepare('SELECT name, role, cwd, status, registered_at FROM agents ORDER BY registered_at')
+      .all();
     res.json(rows);
   } catch (err) {
-    sendPgError(res, err);
+    sendSqliteError(res, err);
   }
 });
 
 // Append a wm_log entry — bb log <name> <kind> "<text>"
-app.post('/api/log', async (req, res) => {
+app.post('/api/log', (req, res) => {
   const { agent, kind, body, addressed_to, reply_to, claim_key } = req.body || {};
   if (!isAgentName(agent)) {
     return res.status(400).json({ error: 'agent must match ^[a-z0-9-]+$' });
@@ -81,68 +84,63 @@ app.post('/api/log', async (req, res) => {
     return res.status(400).json({ error: 'body is required' });
   }
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO wm_log (agent, kind, body, addressed_to, reply_to, claim_key)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, created_at`,
-      [agent, kind, body, addressed_to || null, reply_to || null, claim_key || null]
-    );
-    res.status(201).json(rows[0]);
+    const row = db
+      .prepare(
+        `INSERT INTO wm_log (agent, kind, body, addressed_to, reply_to, claim_key)
+         VALUES (?, ?, ?, ?, ?, ?)
+         RETURNING id, created_at`
+      )
+      .get(agent, kind, body, addressed_to || null, reply_to || null, claim_key || null);
+    res.status(201).json(row);
   } catch (err) {
-    sendPgError(res, err);
+    sendSqliteError(res, err);
   }
 });
 
 // bb read <name> — unread peer entries since this reader's cursor, then
 // advances the cursor. ?all=true replays everything instead (bb read --all).
-app.get('/api/log/:agent', async (req, res) => {
+app.get('/api/log/:agent', (req, res) => {
   const reader = req.params.agent;
   if (!isAgentName(reader)) {
     return res.status(400).json({ error: 'agent must match ^[a-z0-9-]+$' });
   }
   const all = req.query.all === 'true';
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    db.exec('BEGIN IMMEDIATE');
 
     let rows;
     if (all) {
-      ({ rows } = await client.query(
-        'SELECT * FROM wm_log WHERE agent <> $1 ORDER BY id',
-        [reader]
-      ));
+      rows = db.prepare('SELECT * FROM wm_log WHERE agent <> ? ORDER BY id').all(reader);
     } else {
-      ({ rows } = await client.query(
-        `SELECT * FROM wm_log
-         WHERE id > COALESCE((SELECT last_seen_id FROM read_cursors WHERE reader = $1), 0)
-           AND agent <> $1
-         ORDER BY id`,
-        [reader]
-      ));
+      rows = db
+        .prepare(
+          `SELECT * FROM wm_log
+           WHERE id > COALESCE((SELECT last_seen_id FROM read_cursors WHERE reader = ?), 0)
+             AND agent <> ?
+           ORDER BY id`
+        )
+        .all(reader, reader);
       if (rows.length > 0) {
         const maxId = rows[rows.length - 1].id;
-        await client.query(
+        db.prepare(
           `INSERT INTO read_cursors (reader, last_seen_id, updated_at)
-           VALUES ($1, $2, now())
-           ON CONFLICT (reader) DO UPDATE SET last_seen_id = EXCLUDED.last_seen_id,
-                                               updated_at   = EXCLUDED.updated_at`,
-          [reader, maxId]
-        );
+           VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+           ON CONFLICT(reader) DO UPDATE SET last_seen_id = excluded.last_seen_id,
+                                              updated_at   = excluded.updated_at`
+        ).run(reader, maxId);
       }
     }
 
-    await client.query('COMMIT');
+    db.exec('COMMIT');
     res.json(rows);
   } catch (err) {
-    await client.query('ROLLBACK');
-    sendPgError(res, err);
-  } finally {
-    client.release();
+    db.exec('ROLLBACK');
+    sendSqliteError(res, err);
   }
 });
 
 // Claim work atomically — first writer on a claim_key wins, no timestamp race.
-app.post('/api/claims', async (req, res) => {
+app.post('/api/claims', (req, res) => {
   const { agent, body, claim_key } = req.body || {};
   if (!isAgentName(agent)) {
     return res.status(400).json({ error: 'agent must match ^[a-z0-9-]+$' });
@@ -154,29 +152,41 @@ app.post('/api/claims', async (req, res) => {
     return res.status(400).json({ error: 'body is required' });
   }
   try {
-    const { rows } = await pool.query(
-      `WITH logged AS (
-         INSERT INTO wm_log (agent, kind, body, claim_key)
-         VALUES ($1, 'claim', $2, $3)
-         RETURNING id
-       )
-       INSERT INTO claims (claim_key, agent, wm_log_id)
-       SELECT $3, $1, id FROM logged
-       ON CONFLICT (claim_key) WHERE released_at IS NULL DO NOTHING
-       RETURNING id, claim_key, claimed_at`,
-      [agent, body, claim_key]
-    );
-    if (rows.length === 0) {
+    db.exec('BEGIN IMMEDIATE');
+
+    // Always logged, win or lose — matches blackboard/schema.sql's contract
+    // (a losing attempt is still a visible 'claim' entry for peers to see).
+    const logged = db
+      .prepare("INSERT INTO wm_log (agent, kind, body, claim_key) VALUES (?, 'claim', ?, ?) RETURNING id")
+      .get(agent, body, claim_key);
+
+    let claimRow = null;
+    try {
+      claimRow = db
+        .prepare(
+          `INSERT INTO claims (claim_key, agent, wm_log_id) VALUES (?, ?, ?)
+           RETURNING id, claim_key, claimed_at`
+        )
+        .get(claim_key, agent, logged.id);
+    } catch (err) {
+      if (!err.message.includes('UNIQUE constraint')) throw err;
+      // lost the race for this claim_key — fall through with claimRow = null
+    }
+
+    db.exec('COMMIT');
+
+    if (!claimRow) {
       return res.status(409).json({ claimed: false, error: 'lost the race for this claim_key' });
     }
-    res.status(201).json({ claimed: true, ...rows[0] });
+    res.status(201).json({ claimed: true, ...claimRow });
   } catch (err) {
-    sendPgError(res, err);
+    db.exec('ROLLBACK');
+    sendSqliteError(res, err);
   }
 });
 
 // Release a claim — on 'done', or when conceding a lost race.
-app.post('/api/claims/release', async (req, res) => {
+app.post('/api/claims/release', (req, res) => {
   const { agent, claim_key } = req.body || {};
   if (!isAgentName(agent)) {
     return res.status(400).json({ error: 'agent must match ^[a-z0-9-]+$' });
@@ -185,18 +195,19 @@ app.post('/api/claims/release', async (req, res) => {
     return res.status(400).json({ error: 'claim_key is required' });
   }
   try {
-    const { rows } = await pool.query(
-      `UPDATE claims SET released_at = now()
-       WHERE claim_key = $1 AND agent = $2 AND released_at IS NULL
-       RETURNING id, claim_key, released_at`,
-      [claim_key, agent]
-    );
-    if (rows.length === 0) {
+    const row = db
+      .prepare(
+        `UPDATE claims SET released_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+         WHERE claim_key = ? AND agent = ? AND released_at IS NULL
+         RETURNING id, claim_key, released_at`
+      )
+      .get(claim_key, agent);
+    if (!row) {
       return res.status(404).json({ error: 'no active claim for this agent/claim_key' });
     }
-    res.json(rows[0]);
+    res.json(row);
   } catch (err) {
-    sendPgError(res, err);
+    sendSqliteError(res, err);
   }
 });
 
