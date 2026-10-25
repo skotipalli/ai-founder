@@ -17,12 +17,14 @@ function isAgentName(v) {
 // Translate sqlite constraint errors into the right HTTP status instead of
 // leaking a 500 for client mistakes (unknown agent, bad kind, dup name).
 function sendSqliteError(res, err) {
-  if (err.code === 'ERR_SQLITE_ERROR') {
-    if (err.message.includes('UNIQUE constraint')) return res.status(409).json({ error: 'already exists' });
-    if (err.message.includes('FOREIGN KEY constraint')) {
-      return res.status(400).json({ error: 'references an unknown agent' });
-    }
-    if (err.message.includes('CHECK constraint')) return res.status(400).json({ error: 'invalid value' });
+  if (err.message && err.message.includes('UNIQUE constraint')) {
+    return res.status(409).json({ error: 'already exists' });
+  }
+  if (err.message && err.message.includes('FOREIGN KEY constraint')) {
+    return res.status(400).json({ error: 'references an unknown agent' });
+  }
+  if (err.message && err.message.includes('CHECK constraint')) {
+    return res.status(400).json({ error: 'invalid value' });
   }
   console.error(err);
   return res.status(500).json({ error: 'internal error' });
@@ -105,36 +107,32 @@ app.get('/api/log/:agent', (req, res) => {
     return res.status(400).json({ error: 'agent must match ^[a-z0-9-]+$' });
   }
   const all = req.query.all === 'true';
-  try {
-    db.exec('BEGIN IMMEDIATE');
-
-    let rows;
+  const readTxn = db.transaction((reader, all) => {
     if (all) {
-      rows = db.prepare('SELECT * FROM wm_log WHERE agent <> ? ORDER BY id').all(reader);
-    } else {
-      rows = db
-        .prepare(
-          `SELECT * FROM wm_log
-           WHERE id > COALESCE((SELECT last_seen_id FROM read_cursors WHERE reader = ?), 0)
-             AND agent <> ?
-           ORDER BY id`
-        )
-        .all(reader, reader);
-      if (rows.length > 0) {
-        const maxId = rows[rows.length - 1].id;
-        db.prepare(
-          `INSERT INTO read_cursors (reader, last_seen_id, updated_at)
-           VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-           ON CONFLICT(reader) DO UPDATE SET last_seen_id = excluded.last_seen_id,
-                                              updated_at   = excluded.updated_at`
-        ).run(reader, maxId);
-      }
+      return db.prepare('SELECT * FROM wm_log WHERE agent <> ? ORDER BY id').all(reader);
     }
-
-    db.exec('COMMIT');
-    res.json(rows);
+    const rows = db
+      .prepare(
+        `SELECT * FROM wm_log
+         WHERE id > COALESCE((SELECT last_seen_id FROM read_cursors WHERE reader = ?), 0)
+           AND agent <> ?
+         ORDER BY id`
+      )
+      .all(reader, reader);
+    if (rows.length > 0) {
+      const maxId = rows[rows.length - 1].id;
+      db.prepare(
+        `INSERT INTO read_cursors (reader, last_seen_id, updated_at)
+         VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+         ON CONFLICT(reader) DO UPDATE SET last_seen_id = excluded.last_seen_id,
+                                            updated_at   = excluded.updated_at`
+      ).run(reader, maxId);
+    }
+    return rows;
+  });
+  try {
+    res.json(readTxn(reader, all));
   } catch (err) {
-    db.exec('ROLLBACK');
     sendSqliteError(res, err);
   }
 });
@@ -151,18 +149,15 @@ app.post('/api/claims', (req, res) => {
   if (typeof body !== 'string' || !body.trim()) {
     return res.status(400).json({ error: 'body is required' });
   }
-  try {
-    db.exec('BEGIN IMMEDIATE');
-
-    // Always logged, win or lose — matches blackboard/schema.sql's contract
-    // (a losing attempt is still a visible 'claim' entry for peers to see).
+  // Always logged, win or lose — matches blackboard/schema.sql's contract
+  // (a losing attempt is still a visible 'claim' entry for peers to see).
+  const claimTxn = db.transaction((agent, body, claim_key) => {
     const logged = db
       .prepare("INSERT INTO wm_log (agent, kind, body, claim_key) VALUES (?, 'claim', ?, ?) RETURNING id")
       .get(agent, body, claim_key);
 
-    let claimRow = null;
     try {
-      claimRow = db
+      return db
         .prepare(
           `INSERT INTO claims (claim_key, agent, wm_log_id) VALUES (?, ?, ?)
            RETURNING id, claim_key, claimed_at`
@@ -170,17 +165,16 @@ app.post('/api/claims', (req, res) => {
         .get(claim_key, agent, logged.id);
     } catch (err) {
       if (!err.message.includes('UNIQUE constraint')) throw err;
-      // lost the race for this claim_key — fall through with claimRow = null
+      return null; // lost the race for this claim_key
     }
-
-    db.exec('COMMIT');
-
+  });
+  try {
+    const claimRow = claimTxn(agent, body, claim_key);
     if (!claimRow) {
       return res.status(409).json({ claimed: false, error: 'lost the race for this claim_key' });
     }
     res.status(201).json({ claimed: true, ...claimRow });
   } catch (err) {
-    db.exec('ROLLBACK');
     sendSqliteError(res, err);
   }
 });

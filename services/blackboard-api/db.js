@@ -1,15 +1,17 @@
-const { DatabaseSync } = require('node:sqlite');
+const Database = require('better-sqlite3');
 
 const DB_PATH = process.env.BLACKBOARD_DB || 'blackboard.db';
 
-const db = new DatabaseSync(DB_PATH);
-db.exec('PRAGMA foreign_keys = ON');
+const db = new Database(DB_PATH);
+db.pragma('foreign_keys = ON');
 
 // SQLite port of ../../blackboard/schema.sql (dev's Postgres proposal) --
 // same shape (agents / wm_log / read_cursors / claims), adapted for a
 // single-file DB so devops doesn't need to stand up a separate Postgres
 // server on the VM. Created on startup, same pattern as
-// services/waitlist/server.py's init_db().
+// services/waitlist/server.py's init_db(). Uses better-sqlite3 (not the
+// built-in node:sqlite) so this runs on the VM's Node 20 -- node:sqlite
+// needs Node 22.5+.
 db.exec(`
   CREATE TABLE IF NOT EXISTS agents (
       name          TEXT PRIMARY KEY,
