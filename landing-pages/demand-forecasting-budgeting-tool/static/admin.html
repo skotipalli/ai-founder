@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waitlist — admin</title>
+<style>
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #F7F8FA; color: #0F172A; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 24px; display: flex; flex-direction: column; gap: 20px; }
+  h1 { margin: 0; font-size: 24px; font-weight: 700; }
+  input[type="password"] { font: inherit; padding: 10px 12px; border: 1px solid #CBD5E1; border-radius: 6px; width: 320px; }
+  button { font: inherit; padding: 10px 16px; border: none; border-radius: 6px; background: #0F766E; color: #fff; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary { background: #E2E8F0; color: #0F172A; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  th { color: #64748B; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  #msg { font-size: 14px; }
+  #count { font-size: 14px; color: #64748B; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Demand-forecasting waitlist</h1>
+  <p id="count"></p>
+
+  <div id="authRow" style="display: flex; gap: 12px; align-items: center;">
+    <input type="password" id="token" placeholder="Admin token" autocomplete="off">
+    <button id="loadBtn">Load</button>
+    <span id="msg"></span>
+  </div>
+
+  <div id="resultsWrap" style="display: none; flex-direction: column; gap: 12px;">
+    <div style="display: flex; gap: 12px;">
+      <button class="secondary" id="refreshBtn">Refresh</button>
+      <button class="secondary" id="csvBtn">Download CSV</button>
+    </div>
+    <div style="overflow-x: auto;">
+      <table id="table">
+        <thead>
+          <tr><th>Signed up</th><th>Name</th><th>Email</th><th>Role</th><th>Company</th><th>Note</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var tokenInput = document.getElementById('token');
+  var loadBtn = document.getElementById('loadBtn');
+  var refreshBtn = document.getElementById('refreshBtn');
+  var csvBtn = document.getElementById('csvBtn');
+  var msg = document.getElementById('msg');
+  var countEl = document.getElementById('count');
+  var resultsWrap = document.getElementById('resultsWrap');
+  var tbody = document.querySelector('#table tbody');
+  var rows = [];
+
+  // Session-only: the token is never persisted, so it doesn't survive a tab
+  // close. That's deliberate for an admin credential.
+  var sessionToken = '';
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function render() {
+    tbody.innerHTML = rows.map(function (r) {
+      return '<tr>' +
+        '<td>' + escapeHtml(r.created_at) + '</td>' +
+        '<td>' + escapeHtml(r.name) + '</td>' +
+        '<td>' + escapeHtml(r.email) + '</td>' +
+        '<td>' + escapeHtml(r.role) + '</td>' +
+        '<td>' + escapeHtml(r.company) + '</td>' +
+        '<td>' + escapeHtml(r.note) + '</td>' +
+        '</tr>';
+    }).join('');
+    countEl.textContent = rows.length + ' signup' + (rows.length === 1 ? '' : 's');
+  }
+
+  function load() {
+    var t = tokenInput.value.trim();
+    if (!t) { msg.textContent = 'Enter the admin token.'; msg.style.color = '#B91C1C'; return; }
+    sessionToken = t;
+    msg.textContent = 'Loading…';
+    msg.style.color = '#64748B';
+    fetch('/api/admin/waitlist', { headers: { 'Authorization': 'Bearer ' + sessionToken } })
+      .then(function (res) {
+        if (res.status === 401) { throw new Error('Wrong token.'); }
+        if (res.status === 503) { throw new Error('Admin endpoint not configured on the server.'); }
+        if (!res.ok) { throw new Error('Request failed (' + res.status + ').'); }
+        return res.json();
+      })
+      .then(function (data) {
+        rows = data;
+        render();
+        msg.textContent = '';
+        resultsWrap.style.display = 'flex';
+      })
+      .catch(function (err) {
+        msg.textContent = err.message;
+        msg.style.color = '#B91C1C';
+        resultsWrap.style.display = 'none';
+      });
+  }
+
+  function toCsv() {
+    var header = ['created_at', 'name', 'email', 'role', 'company', 'note'];
+    var lines = [header.join(',')];
+    rows.forEach(function (r) {
+      lines.push(header.map(function (k) {
+        var v = r[k] == null ? '' : String(r[k]);
+        return '"' + v.replace(/"/g, '""') + '"';
+      }).join(','));
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'waitlist.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  loadBtn.addEventListener('click', load);
+  refreshBtn.addEventListener('click', load);
+  csvBtn.addEventListener('click', toCsv);
+  tokenInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') load(); });
+})();
+</script>
+</body>
+</html>

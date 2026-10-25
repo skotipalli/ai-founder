@@ -12,6 +12,14 @@ Fake-door validation page built from `specs/demand-forecasting-budgeting-tool.md
 
 It's authored in Claude's Design-canvas `.dc.html` format, which depends on that platform's runtime (`support.js`, the DC web component registry, etc.) to render — these files are **not a standalone static site**; don't expect `open project/Main.dc.html` in a browser to work. The live link above is the actual page.
 
+## `static/` — the deployed version, with a real waitlist
+
+The Design-canvas format can't make arbitrary network calls (confirmed by ux — only a Google Fonts `<link>` and a few platform-internal URLs are allowed), so a real signup form only works here, not in `project/`. This is what devops actually serves at samsumanalytics.com:
+- `index.html` — same content as `project/Main.dc.html`, but the two CTA buttons now point to a real waitlist form (name/email/role required, company/pain-point optional) that POSTs to `/api/waitlist`, instead of a `mailto:` placeholder. Privacy/Terms links are shown but inert ("coming soon") — those pages still have unresolved legal placeholders (see below) and devops deliberately isn't serving them yet.
+- `admin.html` — token-gated view of signups, with CSV export. See `services/waitlist/README.md` for the token setup.
+
+Backend: `services/waitlist/` (Python stdlib + SQLite, no dependencies). Devops owns wiring it up per `GIT_WORKFLOW.md` — this repo only has the code, not a running deployment.
+
 **Known blockers:**
-- The CTA's `mailto:` still has a literal `[CONTACT EMAIL]` placeholder in multiple places (`Main.dc.html`, `Privacy.dc.html`, `Terms.dc.html`, `llm.txt`) — needs a real monitored inbox before this goes to anyone outside the dev/qa/ux/pm/devops group. Owner TBD, pending on pm.
-- `Privacy.dc.html` and `Terms.dc.html` are draft boilerplate with `[COMPANY NAME]`/`[JURISDICTION]` placeholders — need real legal review before this page is shown to anyone outside the team.
+- `[CONTACT EMAIL]` is now only load-bearing for Privacy/Terms (data-subject-rights contact) and `llm.txt`, not for the primary "express interest" flow anymore — that's the waitlist form now. Still needs an owner from pm.
+- `Privacy.dc.html`/`Terms.dc.html` (and their `static/` equivalents, not yet built) are draft boilerplate with `[COMPANY NAME]`/`[JURISDICTION]` placeholders — need real legal review before they're shown to anyone outside the team. devops is holding the footer links disabled until then.

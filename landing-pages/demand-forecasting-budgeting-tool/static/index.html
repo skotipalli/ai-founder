@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demand Forecasting & Budgeting — concept preview</title>
+<style>
+  :root { --accent: #0F766E; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #F7F8FA; color: #0F172A; }
+  a { color: inherit; }
+  .cta { transition: opacity 0.15s ease; cursor: pointer; border: none; }
+  .cta:hover { opacity: 0.88; }
+  .cta:disabled { opacity: 0.5; cursor: not-allowed; }
+  .wrap { width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .inner { width: 100%; max-width: 1040px; padding: 0 24px; display: flex; flex-direction: column; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+  input, select, textarea { font: inherit; padding: 10px 12px; border: 1px solid #CBD5E1; border-radius: 6px; width: 100%; box-sizing: border-box; }
+  label { font-size: 13px; font-weight: 600; color: #334155; display: flex; flex-direction: column; gap: 4px; }
+  @media (max-width: 760px) {
+    .grid-2, .grid-4 { grid-template-columns: 1fr; }
+    .flow-row { flex-direction: column !important; }
+    .flow-arrow { transform: rotate(90deg); }
+    .form-row { grid-template-columns: 1fr !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="inner">
+
+    <!-- Hero -->
+    <section style="padding: 96px 0 64px; display: flex; flex-direction: column; gap: 20px; border-bottom: 1px solid #E2E8F0;">
+      <span style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);">Concept preview — seeking design partners</span>
+      <h1 style="margin: 0; font-size: 44px; line-height: 1.15; font-weight: 700; max-width: 820px;">One trusted number for demand, capacity, and budget.</h1>
+      <p style="margin: 0; font-size: 18px; line-height: 1.6; color: #475569; max-width: 640px;">Today, production planning, procurement, and finance each work from separate, disconnected views of demand, cost, and capacity — and when the budget misses, nobody can tell which factor drove it. This is a concept for one shared forecast-to-budget view across all four roles. It isn't built yet — this page is here to find out if it should be.</p>
+      <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-top: 12px;">
+        <a href="#waitlist-form" class="cta" style="display: inline-flex; align-items: center; padding: 14px 24px; background: var(--accent); color: #FFFFFF; border-radius: 6px; font-size: 15px; font-weight: 600; text-decoration: none;">I want to help shape this</a>
+        <a href="#how-it-works" style="font-size: 15px; font-weight: 600; text-decoration: underline; text-decoration-color: #CBD5E1;">See how it would work ↓</a>
+      </div>
+    </section>
+
+    <!-- Problem -->
+    <section style="padding: 64px 0; display: flex; flex-direction: column; gap: 32px; border-bottom: 1px solid #E2E8F0;">
+      <h2 style="margin: 0; font-size: 26px; font-weight: 700;">Five things are working against today's forecast and budget</h2>
+      <div class="grid-2">
+        <div style="display: flex; gap: 16px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); min-width: 84px; padding-top: 3px;">Demand</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Inaccurate demand forecasts</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Downstream production and budget plans inherit the error from day one.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); min-width: 84px; padding-top: 3px;">Commodity</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Fluctuating raw material prices</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Cost estimates go stale faster than the budget cycle that uses them.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); min-width: 84px; padding-top: 3px;">Supply risk</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Weather and political procurement risk</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Supply-side shocks that today's forecasts and budgets don't account for.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); min-width: 84px; padding-top: 3px;">Data</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Incomplete or inaccurate data</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">The inputs to forecasting and budgeting are themselves unreliable.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); min-width: 84px; padding-top: 3px;">Capacity</span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Production capacity constraints</h3>
+            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Plans that ignore real capacity limits aren't executable plans.</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94A3B8; max-width: 680px;">These compound: a forecast built on bad data, blind to raw-material volatility and capacity limits, produces a budget that's wrong in multiple directions at once.</p>
+    </section>
+
+    <!-- How it works -->
+    <section id="how-it-works" style="padding: 64px 0; display: flex; flex-direction: column; gap: 32px; border-bottom: 1px solid #E2E8F0;">
+      <h2 style="margin: 0; font-size: 26px; font-weight: 700;">One loop, not four disconnected steps</h2>
+      <div class="flow-row" style="display: flex; align-items: stretch; gap: 16px;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--accent);">STEP 1</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 600;">Forecast demand</h3>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">With explicit data-quality flags on the inputs — a confidence signal, not just a number.</p>
+        </div>
+        <div class="flow-arrow" style="display: flex; align-items: center; justify-content: center; color: #CBD5E1; font-size: 24px; flex: 0 0 24px;" aria-hidden="true">→</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--accent);">STEP 2</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 600;">Plan within capacity</h3>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Surface where demand exceeds real production capacity instead of silently overcommitting.</p>
+        </div>
+        <div class="flow-arrow" style="display: flex; align-items: center; justify-content: center; color: #CBD5E1; font-size: 24px; flex: 0 0 24px;" aria-hidden="true">→</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 24px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--accent);">STEP 3</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 600;">Budget as a range</h3>
+          <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">Tied to raw-material price ranges and flagged for weather/political procurement risk — not a single-point guess.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Personas -->
+    <section style="padding: 64px 0; display: flex; flex-direction: column; gap: 32px; border-bottom: 1px solid #E2E8F0;">
+      <h2 style="margin: 0; font-size: 26px; font-weight: 700;">Built around four roles that don't talk to each other today</h2>
+      <div class="grid-4">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px; border-top: 2px solid var(--accent);">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Production planners</h3>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748B;">A demand forecast they can plan production runs against, aware of capacity constraints.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px; border-top: 2px solid var(--accent);">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Supply chain managers</h3>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748B;">Visibility into procurement risk — price, weather, political — feeding into the plan.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px; border-top: 2px solid var(--accent);">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Procurement teams</h3>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748B;">Cost estimates that reflect current and projected raw-material price movement.</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 20px; border-top: 2px solid var(--accent);">
+          <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Finance teams</h3>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #64748B;">A budget estimate that ties back to the same forecast and plan, not a separate guess.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Differentiator -->
+    <section style="padding: 64px 0; display: flex; flex-direction: column; gap: 16px; border-bottom: 1px solid #E2E8F0;">
+      <h2 style="margin: 0; font-size: 26px; font-weight: 700;">Why not just buy a forecasting suite?</h2>
+      <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #475569; max-width: 760px;">Demand forecasting itself is a well-served market — SAP, Kinaxis, o9, and Anaplan all compete on it. What none of them sell is one shared view that ties raw-material price, weather, and political procurement risk directly into a budget number for all four roles above, on top of this company's own data-quality problem. That's the gap: not a forecasting model to build from scratch, but the integration and data-quality layer that connects a bought forecasting engine to a trusted budget.</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #94A3B8; max-width: 760px;">Directional context from a 2026 market scan: vendors in this space cite roughly 20–50% lower forecast error and 20–30% lower inventory as outer bounds — treat these as something to aim toward, not a promise this concept is making.</p>
+    </section>
+
+    <!-- Waitlist form -->
+    <section id="waitlist-form" style="padding: 64px 0 96px; display: flex; flex-direction: column; gap: 20px; align-items: stretch;">
+      <div>
+        <h2 style="margin: 0 0 4px; font-size: 26px; font-weight: 700;">This is a concept, not a product — yet</h2>
+        <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #475569; max-width: 680px;">We're validating this before committing to a build. If this matches how you work today, tell us — we're looking for a few people willing to be named design partners, the same way Tracy and Allan are driving a related tool on the exception-handling side.</p>
+      </div>
+
+      <form id="waitlistForm" style="display: flex; flex-direction: column; gap: 16px; max-width: 520px;" novalidate>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <label>Name
+            <input type="text" name="name" required maxlength="200" autocomplete="name">
+          </label>
+          <label>Email
+            <input type="email" name="email" required maxlength="320" autocomplete="email">
+          </label>
+        </div>
+        <label>Role
+          <select name="role" required>
+            <option value="" disabled selected>Choose one</option>
+            <option>Production planners</option>
+            <option>Supply chain managers</option>
+            <option>Procurement teams</option>
+            <option>Finance teams</option>
+          </select>
+        </label>
+        <label>Company <span style="font-weight: 400; color: #94A3B8;">(optional)</span>
+          <input type="text" name="company" maxlength="200">
+        </label>
+        <label>What's your biggest forecasting or budgeting pain point right now? <span style="font-weight: 400; color: #94A3B8;">(optional)</span>
+          <textarea name="note" rows="3" maxlength="2000"></textarea>
+        </label>
+        <button type="submit" class="cta" style="align-self: flex-start; padding: 14px 24px; background: var(--accent); color: #FFFFFF; border-radius: 6px; font-size: 15px; font-weight: 600;">Join the waitlist</button>
+        <p id="formStatus" role="status" style="margin: 0; font-size: 14px;"></p>
+      </form>
+      <p style="margin: 0; font-size: 13px; color: #94A3B8;">No commitment — this is user validation, not a live product.</p>
+    </section>
+
+    <!-- Footer -->
+    <footer style="padding: 32px 0 48px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+      <span style="font-size: 13px; color: #94A3B8;" title="Pending jurisdiction/company-name sign-off">Privacy Policy (coming soon)</span>
+      <span style="font-size: 13px; color: #94A3B8;" title="Pending jurisdiction/company-name sign-off">Terms of Use (coming soon)</span>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('waitlistForm');
+  var status = document.getElementById('formStatus');
+  var button = form.querySelector('button[type="submit"]');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      role: form.role.value,
+      company: form.company.value.trim(),
+      note: form.note.value.trim()
+    };
+    if (!data.name || !data.email || !data.role) {
+      status.textContent = 'Name, email, and role are required.';
+      status.style.color = '#B91C1C';
+      return;
+    }
+    button.disabled = true;
+    status.textContent = 'Submitting…';
+    status.style.color = '#64748B';
+
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(function (res) { return res.json().then(function (body) { return { ok: res.ok, body: body }; }); })
+      .then(function (result) {
+        if (result.ok) {
+          status.textContent = result.body.status === 'already on waitlist'
+            ? "You're already on the list — thanks!"
+            : "You're on the list. Thanks for helping shape this.";
+          status.style.color = '#15803D';
+          form.reset();
+        } else {
+          status.textContent = result.body.error || 'Something went wrong — try again.';
+          status.style.color = '#B91C1C';
+        }
+      })
+      .catch(function () {
+        status.textContent = 'Network error — try again in a moment.';
+        status.style.color = '#B91C1C';
+      })
+      .finally(function () {
+        button.disabled = false;
+      });
+  });
+})();
+</script>
+</body>
+</html>

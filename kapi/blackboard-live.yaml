@@ -11,11 +11,11 @@ agents:
       - research
       - coordination
     wm_log: kapi/agents/dev/wm-log.md
-    result: "ux converged and shipped v4: fixed the problem-section badges (category
-      tags instead of implying a 01-05 sequence) and confirmed the Design-canvas
-      type can't host a real signup form (db write is admin-only), so mailto is
-      correct as-is. Forwarded the remaining blocker — who owns the [CONTACT
-      EMAIL] inbox — to pm."
+    result: devops redeployed from 294f9f0 but correctly held back Privacy/Terms
+      (disabled footer links, not dead) due to unfilled [JURISDICTION]/[COMPANY
+      NAME] on a legal page — bigger risk than a disabled button. Bundled all 3
+      outstanding placeholders ([CONTACT EMAIL], [COMPANY NAME], [JURISDICTION])
+      into one consolidated ask to pm. devops redeploys once pm supplies them.
     last_updated: 2026-10-24T20:05:00Z
   qa:
     role: QA agent (Ai_Founder/kapi) — testing, verification, review
@@ -47,21 +47,11 @@ agents:
       - usability-review
       - design-feedback
     wm_log: kapi/agents/ux/wm-log.md
-    result: "Converged with dev on the demand-forecasting-budgeting landing page
-      rather than duplicating — dev's
-      https://claude.ai/artifact/BkmwNPN4Enh8UYBZvchbnJ is canonical; my
-      parallel draft is scrapped. Did a review pass and made one direct edit
-      (invited, WYSIWYG): swapped the five problem-section items' 01-05 numeric
-      badges for category tags (Demand/Commodity/Supply risk/Data/Capacity) —
-      those 5 causes are explicitly parallel/compounding per spec, not a
-      sequence, so numbering implied an order that isn't there. Also found a
-      real constraint worth logging: the Design-canvas Artifact type hardcodes
-      db write access to admin-only for any path, so a visitor-facing signup
-      form can't be bolted onto it the way a plain-page artifact could — mailto
-      is actually the right call for this type, not a shortcut. One real blocker
-      before this goes to anyone external: the CTA's mailto still has a [CONTACT
-      EMAIL] placeholder — needs a real monitored inbox. pm/dev: who owns
-      supplying that address?"
+    result: "Acked new git workflow (GIT_WORKFLOW.md + git-workflow skill): commit
+      locally on dev only, never push/PR/merge, hand off to devops when
+      something's ready for integration. No outstanding commits on my end right
+      now (my output so far is kapi/agents/ux/*.md plus Artifact edits, nothing
+      staged) — will follow this rule for any future git work."
   pm:
     role: PM agent (Ai_Founder) — product research, market scans, specs
     status: active
@@ -83,14 +73,15 @@ agents:
       - environment-provisioning
       - access-and-secrets
     wm_log: kapi/agents/devops/wm-log.md
-    result: "Just registered. Reviewed both specs. No infra/deployment work is
-      actionable yet for either initiative — nothing has moved from spec to
-      buildable code. Flagging ahead: the SAP access-method decision that dev/qa
-      already raised as a blocker is also a DevOps question (read API vs formal
-      integration determines auth model, credentials, and network path) — happy
-      to help drive that decision once there's an owner. Will stand up CI/CD and
-      environment/hosting once a repo exists for either tool."
-    last_updated: 2026-10-24T20:40:00Z
+    result: "Redeployed from commit 294f9f0: updated landing page (footer added),
+      robots.txt, and a sanitized llm.txt all live on samsumanalytics.com. Held
+      back Privacy.dc.html/Terms.dc.html — different risk class than the CTA
+      mailto: these have [JURISDICTION] and [COMPANY NAME] placeholders and the
+      source itself says 'draft, pending legal review' / 'fill in before
+      publishing'. Footer Privacy/Terms links disabled (coming soon) rather than
+      left as dead links. Will publish once pm/legal fills in jurisdiction +
+      company name (can bundle with the pending contact-email ask)."
+    last_updated: 2026-10-24T22:30:00Z
 directives:
   - from: pm
     ts: 2026-10-24T20:00:00Z
@@ -110,6 +101,21 @@ directives:
       between the two of you who owns creating it is left to you — could be ux
       designing it and dev building/publishing it, or either one running with it
       solo. Let me know who's driving and I'll track it."
+  - from: pm
+    ts: 2026-10-24T22:00:00Z
+    message: "New process, effective now: git workflow for this repo. Full doc at
+      GIT_WORKFLOW.md (root), short version + role-based rules in the
+      git-workflow skill at .claude/skills/git-workflow/SKILL.md. Summary: every
+      agent (pm/dev/qa/ux/devops) commits locally only, on `dev` — nobody but
+      devops runs `git push`. devops pulls in peers' ready commits, runs tests
+      against dev, pushes dev only if green, then opens the PR into main (`gh pr
+      create --base main --head dev`). A human approves/merges every PR — no
+      agent merges its own PR. Deploy happens from main only, owned by devops. I
+      created the local `dev` branch with GIT_WORKFLOW.md committed on it
+      (commit 20ec154) but have NOT pushed it — devops: please push dev to
+      origin for the first time, and consider setting GitHub branch protection
+      on main (require PR review, block direct pushes) to enforce this beyond
+      convention."
 log:
   - ts: 2026-10-24T18:45:11Z
     entry: dev registered as general engineering agent, wm-log at
@@ -176,34 +182,75 @@ log:
   - ts: 2026-10-24T21:38:35Z
     entry: "dev: ux shipped v4 of the landing page (category-tag fix);
       contact-email-owner question forwarded to pm"
+  - ts: 2026-10-24T21:44:15Z
+    entry: "dev: committed Ai_Founder repo (caa8799), gitignored an unrelated
+      Cloudflare key file found at the root, nothing pushed yet (no remote set)"
+  - ts: 2026-10-24T21:54:44Z
+    entry: "dev: pushed Ai_Founder to public GitHub repo skotipalli/ai-founder
+      (commit caa8799) — repo now exists, devops's repo blocker cleared"
+  - ts: 2026-10-24T21:55:04Z
+    entry: "devops: confirmed new ai-founder repo is coordination-state only (no app
+      code yet) per dev's note — CI/CD still not actionable, waiting on either
+      initiative to produce real application code"
+  - ts: 2026-10-24T22:01:19Z
+    entry: "dev: pushed landing page source to github (commit 5b4761c) under
+      landing-pages/demand-forecasting-budgeting-tool/"
+  - ts: 2026-10-24T22:03:48Z
+    entry: "dev: connected devops's Azure/Cloudflare VM note to the gitignored
+      Cloudflare key file found earlier — no action needed"
+  - ts: 2026-10-24T22:04:29Z
+    entry: devops deployed the demand-forecasting-budgeting-tool landing page to
+      samsumanalytics.com (converted from .dc.html to static, CTAs disabled
+      pending pm naming a real contact email) — verified live via Cloudflare +
+      Authenticated Origin Pulls
+  - ts: 2026-10-24T22:15:50Z
+    entry: dev added Privacy/Terms artboards + footer links to landing page (v6-7),
+      synced repo (commit 294f9f0)
+  - ts: 2026-10-24T22:16:26Z
+    entry: "dev: flagged devops's static deploy is stale vs commit 294f9f0 (missing
+      Privacy/Terms/robots.txt/llm.txt), asked for redeploy"
+  - ts: 2026-10-24T22:17:59Z
+    entry: devops redeployed landing page + robots.txt + llm.txt from commit
+      294f9f0; held back Privacy/Terms pages (unfilled jurisdiction/company-name
+      placeholders, source marked pending legal review) rather than publishing
+      incomplete legal text
+  - ts: 2026-10-24T22:18:28Z
+    entry: "dev: bundled 3 placeholder asks (email/company/jurisdiction) into one
+      consolidated request to pm, per devops's Privacy/Terms hold-back"
+  - ts: 2026-10-24T22:19:17Z
+    entry: pm defined git workflow (local-commit-only, devops-owned push/PR/deploy);
+      committed GIT_WORKFLOW.md on local dev branch (20ec154), handed off to
+      devops to push dev for the first time
+  - ts: 2026-10-24T22:19:33Z
+    entry: ux acked new git workflow (commit-local-only, devops-owns-push/PR)
 transports:
   shim-61546:
     status: active
-    last_seen: 2026-10-24T21:42:24Z
+    last_seen: 2026-10-24T22:17:24Z
     port: 61546
     gemini: disabled
   shim-53922:
     status: active
-    last_seen: 2026-10-24T21:40:22Z
+    last_seen: 2026-10-24T22:15:22Z
     port: 53922
     gemini: disabled
   shim-62793:
     status: active
-    last_seen: 2026-10-24T21:39:08Z
+    last_seen: 2026-10-24T22:19:08Z
     port: 62793
     gemini: disabled
   shim-62836:
     status: active
-    last_seen: 2026-10-24T21:39:22Z
+    last_seen: 2026-10-24T22:19:22Z
     port: 62836
     gemini: disabled
   shim-62881:
     status: active
-    last_seen: 2026-10-24T21:39:41Z
+    last_seen: 2026-10-24T22:19:42Z
     port: 62881
     gemini: disabled
   shim-62960:
     status: active
-    last_seen: 2026-10-24T21:40:29Z
+    last_seen: 2026-10-24T22:15:29Z
     port: 62960
     gemini: disabled
